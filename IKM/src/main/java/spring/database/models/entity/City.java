@@ -1,8 +1,6 @@
 package spring.database.models.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
 
@@ -25,7 +23,6 @@ public class City {
     private List<Attraction> attractions;
 
     public City() {
-        // Конструктор по умолчанию необходим для JPA
     }
 
     // Геттер для id

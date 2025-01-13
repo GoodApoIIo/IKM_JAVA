@@ -18,7 +18,6 @@ public class Attraction {
     private City city;
 
     public Attraction() {
-        // Конструктор по умолчанию необходим для JPA
     }
 
     // Геттер для id
@@ -26,7 +25,7 @@ public class Attraction {
         return id;
     }
 
-    // Сеттер для id (не рекомендуется для @GeneratedValue, но добавлен для полноты)
+    // Сеттер для id
     public void setId(Integer id) {
         this.id = id;
     }

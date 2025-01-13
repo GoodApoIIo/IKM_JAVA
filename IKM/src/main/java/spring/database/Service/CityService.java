@@ -8,13 +8,10 @@ import spring.database.repositories.CityRepository;
 import java.util.List;
 import java.util.Optional;
 
-// Этот сервис управляет бизнес-логикой, связанной с сущностью City.
 @Service
 public class CityService {
     private final CityRepository cityRepository;
 
-    // @Autowired: Внедрение зависимости CityRepository через конструктор.
-    // Это позволяет сервису использовать методы репозитория.
     @Autowired
     public CityService(CityRepository cityRepository) {
         this.cityRepository = cityRepository;
@@ -22,17 +19,17 @@ public class CityService {
 
     // Метод для получения всех городов из базы данных.
     public List<City> getAllCities() {
-        return cityRepository.findAll(); // Использует метод findAll() из JpaRepository.
+        return cityRepository.findAll();
     }
 
     // Метод для получения города по его ID.
     public Optional<City> getCityById(Integer id) {
-        return cityRepository.findById(id); // Использует метод findById() из JpaRepository.
+        return cityRepository.findById(id);
     }
 
     // Метод для добавления нового города в базу данных.
     public City addCity(City city) {
-        return cityRepository.save(city); // Использует метод save() из JpaRepository.
+        return cityRepository.save(city);
     }
 
     // Метод для обновления существующего города.
@@ -45,12 +42,16 @@ public class CityService {
             return cityRepository.save(updatedCity);
         }
         // Если города с таким ID не существует, возвращаем null.
-        // В реальном приложении можно бросать исключение.
         return null;
     }
 
     // Метод для удаления города по его ID.
     public void deleteCity(Integer id) {
-        cityRepository.deleteById(id); // Использует метод deleteById() из JpaRepository.
+        cityRepository.deleteById(id);
+    }
+
+    // Метод для получения города со всеми его достопримечательностями
+    public Optional<City> getCityWithAttractions(Integer id) {
+        return cityRepository.findById(id); // JPA автоматически загрузит связанные достопримечательности, если FetchType.LAZY не используется.
     }
 }
