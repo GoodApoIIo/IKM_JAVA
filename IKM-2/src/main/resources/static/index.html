@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Destinations</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        h1, h2, h3 {
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 5px;
+             display: flex;
+             align-items: center;
+         }
+         form {
+             margin-top: 20px;
+             display: flex;
+            align-items: center;
+        }
+        input, button {
+            margin-bottom: 10px;
+            padding: 8px;
+            margin-right: 5px;
+        }
+         .error-message{
+            color: red;
+          }
+        .edit-form {
+            display: none;
+            margin-left: 10px;
+        }
+
+        .edit-form.active {
+            display: flex;
+        }
+         .edit-form input {
+           margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Welcome to Travel Destinations</h1>
+
+<h2>Countries</h2>
+<ul id="countries-list">
+    <!-- Список стран будет добавлен сюда с помощью JavaScript -->
+</ul>
+<form id="add-country-form">
+    <input type="text" id="country-name" placeholder="Country Name" required>
+    <button type="submit">Add Country</button>
+    <div id="country-error" class="error-message"></div>
+</form>
+
+
+<h2>Cities</h2>
+<ul id="cities-list">
+    <!-- Список городов будет добавлен сюда с помощью JavaScript -->
+</ul>
+<form id="add-city-form">
+    <input type="text" id="city-name" placeholder="City Name" required>
+    <input type="number" id="country-id-city" placeholder="Country ID" required>
+    <button type="submit">Add City</button>
+    <div id="city-error" class="error-message"></div>
+</form>
+
+<h2>Attractions</h2>
+<ul id="attractions-list">
+    <!-- Список достопримечательностей будет добавлен сюда с помощью JavaScript -->
+</ul>
+<form id="add-attraction-form">
+    <input type="text" id="attraction-name" placeholder="Attraction Name" required>
+    <input type="number" id="city-id-attraction" placeholder="City ID" required>
+    <button type="submit">Add Attraction</button>
+    <div id="attraction-error" class="error-message"></div>
+</form>
+
+<script>
+    // Функция для загрузки и отображения данных
+       async function loadData() {
+        // Загрузка стран
+        try {
+            let countries = JSON.parse(localStorage.getItem('countries'));
+
+            if (!countries) {
+                const countriesResponse = await fetch('/countries');
+                countries = await countriesResponse.json();
+                localStorage.setItem('countries', JSON.stringify(countries));
+            }
+
+            const countriesList = document.getElementById('countries-list');
+            countriesList.innerHTML = '';
+            countries.forEach(country => {
+                const li = document.createElement('li');
+                li.textContent = country.countryName;
+
+                const citiesList = document.createElement('ul');
+                citiesList.style.marginLeft = '20px' //отступ для городов
+                if (country.cities) {
+                    country.cities.forEach(city => {
+                        const cityLi = document.createElement('li');
+                       cityLi.textContent = city.cityName;
+
+                       const attractionsList = document.createElement('ul');
+                        attractionsList.style.marginLeft = '20px'//отступ для достопримечательностей
+                        if (city.attractions) {
+                            city.attractions.forEach(attraction => {
+                                const attractionLi = document.createElement('li');
+                                attractionLi.textContent = attraction.attractionName;
+                                attractionsList.appendChild(attractionLi);
+                            });
+                            cityLi.appendChild(attractionsList);
+                        }
+                         citiesList.appendChild(cityLi);
+                    });
+                    li.appendChild(citiesList);
+                }
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.onclick = () => showEditForm(country.id, 'country', li, country.countryName);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteItem(`/countries/${country.id}`, 'countries-list');
+
+
+                const editForm = document.createElement('form');
+                editForm.classList.add('edit-form');
+                editForm.innerHTML = `
+                   <input type="text" value="${country.countryName}">
+                  <button type="button" onclick="saveItem(${country.id}, this.parentNode, 'country')">Save</button>
+                  <button type="button" onclick="hideEditForm(this.parentNode)">Cancel</button>
+                `;
+
+                li.appendChild(editButton);
+                li.appendChild(deleteButton);
+                li.appendChild(editForm);
+                countriesList.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error loading countries:', error);
+        }
+
+        // Загрузка городов
+        try {
+            let cities = JSON.parse(localStorage.getItem('cities'));
+
+            if (!cities) {
+                const citiesResponse = await fetch('/cities');
+                cities = await citiesResponse.json();
+                localStorage.setItem('cities', JSON.stringify(cities));
+            }
+
+            const citiesList = document.getElementById('cities-list');
+            citiesList.innerHTML = '';
+            cities.forEach(city => {
+               const li = document.createElement('li');
+                li.textContent = city.cityName;
+                 const attractionsList = document.createElement('ul');
+                  attractionsList.style.marginLeft = '20px' //отступ для достопримечательностей
+                 if (city.attractions) {
+                     city.attractions.forEach(attraction => {
+                       const attractionLi = document.createElement('li');
+                         attractionLi.textContent = attraction.attractionName;
+                         attractionsList.appendChild(attractionLi);
+                     });
+                     li.appendChild(attractionsList);
+                }
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.onclick = () => showEditForm(city.id, 'city', li, city.cityName, city.country.id);
+
+               const deleteButton = document.createElement('button');
+              deleteButton.textContent = 'Delete';
+               deleteButton.onclick = () => deleteItem(`/cities/${city.id}`, 'cities-list');
+
+                const editForm = document.createElement('form');
+                editForm.classList.add('edit-form');
+                editForm.innerHTML = `
+                   <input type="text" value="${city.cityName}">
+                   <input type="number" value="${city.country.id}">
+                  <button type="button" onclick="saveItem(${city.id}, this.parentNode, 'city')">Save</button>
+                  <button type="button" onclick="hideEditForm(this.parentNode)">Cancel</button>
+               `;
+                li.appendChild(editButton);
+                li.appendChild(deleteButton);
+                li.appendChild(editForm);
+               citiesList.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error loading cities:', error);
+        }
+        // Загрузка достопримечательностей
+         try {
+            let attractions = JSON.parse(localStorage.getItem('attractions'));
+
+            if(!attractions){
+            const attractionsResponse = await fetch('/attractions');
+              attractions = await attractionsResponse.json();
+             localStorage.setItem('attractions', JSON.stringify(attractions));
+            }
+             const attractionsList = document.getElementById('attractions-list');
+            attractionsList.innerHTML = '';
+            attractions.forEach(attraction => {
+                 const li = document.createElement('li');
+               li.textContent = attraction.attractionName;
+
+               const editButton = document.createElement('button');
+               editButton.textContent = 'Edit';
+             editButton.onclick = () => showEditForm(attraction.id, 'attraction', li, attraction.attractionName, attraction.city.id);
+
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteItem(`/attractions/${attraction.id}`, 'attractions-list');
+
+                const editForm = document.createElement('form');
+               editForm.classList.add('edit-form');
+               editForm.innerHTML = `
+                    <input type="text" value="${attraction.attractionName}">
+                    <input type="number" value="${attraction.city.id}">
+                  <button type="button" onclick="saveItem(${attraction.id}, this.parentNode, 'attraction')">Save</button>
+                  <button type="button" onclick="hideEditForm(this.parentNode)">Cancel</button>
+                `;
+               li.appendChild(editButton);
+               li.appendChild(deleteButton);
+             li.appendChild(editForm);
+               attractionsList.appendChild(li);
+            });
+        } catch (error) {
+            console.error('Error loading attractions:', error);
+         }
+    }
+    // Функция для отправки POST запроса
+    async function postData(url, data, errorDivId) {
+         try {
+            const response = await fetch(url, {
+               method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+               body: JSON.stringify(data),
+            });
+            if (!response.ok){
+                const error = await response.text();
+               document.getElementById(errorDivId).textContent = `Error: ${error}`;
+           }else{
+               document.getElementById(errorDivId).textContent = '';
+                 localStorage.clear();
+                 loadData();
+            }
+        } catch (error) {
+             console.error(`Error:`, error);
+              document.getElementById(errorDivId).textContent = `Error: ${error}`;
+        }
+     }
+    // Функция для отправки PUT запроса
+     async function saveItem(id, form, type) {
+        const inputs = form.querySelectorAll('input');
+       const  name = inputs[0].value;
+       let idFrom = null;
+       if (inputs.length > 1) {
+          idFrom =  inputs[1].value
+        }
+
+
+         let url = null;
+          let data = null;
+        if(type === 'country'){
+            url = `/countries/${id}`;
+           data = { countryName: name };
+        } else if(type === 'city'){
+            url = `/cities/${id}`;
+             data = { cityName: name , country: { id: idFrom} }
+         }else if(type === 'attraction'){
+             url = `/attractions/${id}`;
+            data = { attractionName: name , city: { id: idFrom } };
+        }
+
+        try {
+              const response = await fetch(url, {
+               method: 'PUT',
+               headers: {
+                  'Content-Type': 'application/json',
+                 },
+                body: JSON.stringify(data),
+                });
+              if (!response.ok) {
+                   const error = await response.text();
+                 alert(`Error: ${error}`);
+               }else{
+                localStorage.clear();
+                   loadData();
+            }
+        } catch (error) {
+             console.error(`Error:`, error);
+             alert(`Error: ${error}`);
+        }
+     }
+     // Функция для отправки DELETE запроса
+    async function deleteItem(url, listId) {
+         try {
+             const response = await fetch(url, {
+                 method: 'DELETE',
+             });
+              if (!response.ok){
+                   const error = await response.text();
+                 alert(`Error: ${error}`);
+              }else{
+                 localStorage.clear();
+                loadData();
+            }
+        } catch (error) {
+            console.error(`Error:`, error);
+            alert(`Error: ${error}`);
+        }
+    }
+     function showEditForm(id, type, li, name, idFrom){
+         const editForms = document.querySelectorAll('.edit-form');
+        editForms.forEach(form => {
+           form.classList.remove('active')
+         })
+
+        const editForm = li.querySelector('.edit-form');
+        const inputs = editForm.querySelectorAll('input');
+        inputs[0].value = name;
+        if(inputs.length > 1){
+          inputs[1].value = idFrom;
+       }
+        editForm.classList.add('active')
+
+    }
+   function hideEditForm(form){
+         form.classList.remove('active');
+    }
+    // Добавление новой страны
+    document.getElementById('add-country-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const countryName = document.getElementById('country-name').value;
+         await postData('/countries', { countryName }, 'country-error');
+    });
+    // Добавление нового города
+    document.getElementById('add-city-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const cityName = document.getElementById('city-name').value;
+        const countryId = document.getElementById('country-id-city').value;
+        await postData('/cities', { cityName , country: { id: countryId } }, 'city-error');
+    });
+
+    // Добавление новой достопримечательности
+    document.getElementById('add-attraction-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const attractionName = document.getElementById('attraction-name').value;
+        const cityId = document.getElementById('city-id-attraction').value;
+        await postData('/attractions', { attractionName , city: { id: cityId} }, 'attraction-error');
+    });
+
+     // Запуск загрузки данных после полной загрузки страницы
+    window.onload = loadData;
+</script>
+</body>
+</html>
